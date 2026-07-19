@@ -1,0 +1,5 @@
+venv/
+__pycache__/
+*.pyc
+data/raw/online_retail_II.xlsx
+src/build_features_obselete.py
