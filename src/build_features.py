@@ -35,10 +35,19 @@ def compute_rfm(df):
     rfm = df.groupby("Customer ID").agg(
         Recency=("InvoiceDate", lambda x: (snapshot_date - x.max()).days),
         Frequency=("Invoice", "nunique"),
-        Monetary=("TotalPrice", "sum")
+        Monetary=("TotalPrice", "sum"),
+        AvgBasket=("TotalPrice", "mean"),
+        Country=("Country", "first"),
     ).reset_index()
     # Mark customers as churned when their last purchase was more than 90 days ago
     rfm["Churned"] = np.where(rfm["Recency"] > 90, 1, 0)
+
+    returns = df[df["Quantity"] < 0].groupby("Customer ID").agg(
+        ReturnCount=("Invoice", "nunique")
+    ).reset_index()
+
+    rfm = rfm.merge(returns, on="Customer ID", how="left")
+    rfm["ReturnCount"] = rfm["ReturnCount"].fillna(0)
 
     return rfm
 
@@ -48,3 +57,4 @@ if __name__ == "__main__":
     df = load_and_clean()
     rfm = compute_rfm(df)
     rfm.to_csv("data/processed/customer_features.csv", index=False)
+    print(rfm.head())
