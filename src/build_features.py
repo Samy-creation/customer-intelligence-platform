@@ -38,9 +38,12 @@ def compute_rfm(df):
         Monetary=("TotalPrice", "sum"),
         AvgBasket=("TotalPrice", "mean"),
         Country=("Country", "first"),
+        FirstPurchase=("InvoiceDate", "min"),
+        LastPurchase=("InvoiceDate", "max"),
     ).reset_index()
     # Mark customers as churned when their last purchase was more than 90 days ago
     rfm["Churned"] = np.where(rfm["Recency"] > 90, 1, 0)
+    rfm["TenureDays"] = (rfm["LastPurchase"] - rfm["FirstPurchase"]).dt.days
 
     returns = df[df["Quantity"] < 0].groupby("Customer ID").agg(
         ReturnCount=("Invoice", "nunique")
