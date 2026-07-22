@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_auc_score, classification_report
 import xgboost as xgb
 
@@ -19,15 +19,35 @@ def prepare_data(df):
 
 def train_model(X_train, y_train):
     model = xgb.XGBClassifier(
-        n_estimators=200,
-        max_depth=4,
-        learning_rate=0.05,
+        n_estimators=100,
+        max_depth=3,
+        learning_rate=0.1,
         random_state=42,
         eval_metric="logloss"
     )
     model.fit(X_train, y_train)
     return model
     
+
+def tune_hyperparameters(X_train, y_train):
+    param_grid = {
+        "max_depth": [3, 4, 5, 6],
+        "learning_rate": [0.01, 0.05, 0.1],
+        "n_estimators": [100, 200, 300],
+    }
+    
+    grid = GridSearchCV(
+        xgb.XGBClassifier(random_state=42, eval_metric="logloss"),
+        param_grid,
+        scoring="roc_auc",
+        cv=5
+    )
+    grid.fit(X_train, y_train)
+    
+    print("Best params:", grid.best_params_)
+    print("Best CV ROC AUC:", grid.best_score_)
+    
+    return grid.best_params_
 
 
 
